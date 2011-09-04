@@ -362,8 +362,7 @@ class AlotConfigParser(DefaultsConfigParser):
                 hb = self.get('256c-theme', 'threadline_focus_bg',
                               fallback='default')
                 p.append((attr + '_focus', nf, nb, m, hf, hb))
-        print '\n'.join([ str(v) for v in  p])
-        raw_input()
+        #print '\n'.join([ str(v) for v in  p])
         return p
 
     def get_tagattr(self, tag, focus=False):
