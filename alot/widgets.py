@@ -41,14 +41,15 @@ def parse_authors(authors_string, maxlength, last_author=None):
 
       - First author is always shown (if too long is shorten with ellipsis)
 
-      - If the is remaining space, last author is shown (if too long,
+      - If remaining space, last author is also shown (if too long,
         uses ellipsis)
 
-      - If there are more authors in the thread, show the maximum of
-        them. more recent senders have more priority.
+      - If there are more than 2 authors in the thread, show the
+        maximum of them. More recent senders have more priority (is
+        the list of authors already sorted by the date of msgs????)
       
-      - hidden authors are indicated with an ellipsis between the
-        first and the other authors
+      - If it is necessary to hide authors, this is indicated with an
+        ellipsis between the first and the other authors shown.
 
     Example (authors string with different length constrains):
          'King Kong, Mucho Muchacho, Jaime Huerta, Flash Gordon'
@@ -71,42 +72,30 @@ def parse_authors(authors_string, maxlength, last_author=None):
             authors.append(strip(au.split()[0]))
         else:
             authors.append(au)
-    total_authors = len(authors)
-    print authors
+
     first_au = shorten(authors.popleft(), maxlength)
     remaining_length = maxlength - len(first_au)
     authors_chain = deque()
 
     if authors and maxlength>3 and remaining_length < 3: 
         first_au = shorten(first_au, maxlength - 3)
-        print remaining_length, first_au
         remaining_length += 3
 
     while authors and remaining_length >= 3: 
         au = authors.pop()
-        print au, authors_chain, remaining_length
         if len(au)>1 and (remaining_length == 3 or (authors and remaining_length <7)): 
             authors_chain.appendleft(u'\u2026')
             break 
         else:
             if authors:
-                print "added author reserving 3 chars", au
                 au_string = shorten(au, remaining_length - 5)
             else:
-                print "added author", au
                 au_string = shorten(au, remaining_length - 2)
             remaining_length -= len(au_string) + 2
             authors_chain.appendleft(au_string)
 
     authors_chain.appendleft(first_au)
-    print authors_chain
-    #authors_chain.appendleft(shorten(orig_author, remaining_length))
     authorsstring = ', '.join(authors_chain)
-    print authorsstring
-    print authorsstring[:maxlength]
-    print
-    #if total_authors>2:
-    #    raw_input()
     return authorsstring[:maxlength]
         
 
@@ -260,11 +249,11 @@ class TagWidget(urwid.AttrMap):
         #self.translated = self.translated.encode('utf-8')
         #self.txt = urwid.Text(self.translated, wrap='clip')
         #normal = config.get_tagattr(tag)
-        print config.get_tagattr(tag)
-
-        normal, text = config.get('tag-colors', tag) or [config.get_tagattr(tag), tag]
+        
+        # I understand yet the use of self.translated
+        # Check if a symbol conversion and custom color exists for this tag
+        normal, text = config.get('tag-colors', tag, []) or [config.get_tagattr(tag), tag]
         focus = config.get_tagattr(tag, focus=True)
-        print tag, normal, text
         self.txt = urwid.Text(text.encode('utf-8'), wrap='clip')
         urwid.AttrMap.__init__(self, self.txt, normal, focus)
 
