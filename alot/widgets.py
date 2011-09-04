@@ -192,15 +192,13 @@ class ThreadlineWidget(urwid.AttrMap):
         cols.append(('fixed', len(datestring), self.date_w))
         cols.append(('fixed', len(authorsstring), self.authors_w))
         cols.append(('fixed', len(mailcountstring), self.mailcount_w))
+
         cols.extend(tagstrings)
 
         if subjectstring:
             cols.append(('fixed', len(subjectstring), self.subject_w))
         if self.display_content:
             cols.append(self.content_w)
-
-
-        
 
         self.columns = urwid.Columns(cols, dividechars=1)
         self.original_widget = self.columns
@@ -257,21 +255,18 @@ class TagWidget(urwid.AttrMap):
     def __init__(self, tag):
 
         self.tag = tag
-        #self.translated = config.get('tag-translate', tag, fallback=tag)
+
         #self.translated = self.translated.encode('utf-8')
         #self.txt = urwid.Text(self.translated, wrap='clip')
         #normal = config.get_tagattr(tag)
 
-        # I understand yet the use of self.translated
-        # Check if a symbol conversion and custom color exists for this tag
-        normal, text = config.get('tag-colors', tag, []) or \
-            [config.get_tagattr(tag), tag]
+        normal = config.get_tagattr(tag)
         focus = config.get_tagattr(tag, focus=True)
-        self.txt = urwid.Text(text.encode('utf-8'), wrap='clip')
-        self.focus_palette = focus
+        self.translated = config.get('tag-translate', tag, fallback=tag)
+        self.txt = urwid.Text(self.translated)#, wrap='space')
+        self.focus_palette = normal
         self.unfocus_palette = normal
-        urwid.AttrMap.__init__(self, self.txt, "message_attachment", focus)
-
+        urwid.AttrMap.__init__(self, self.txt, self.unfocus_palette, self.focus_palette)
 
     def width(self):
         # evil voodoo hotfix for double width chars that may

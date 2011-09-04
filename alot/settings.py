@@ -171,7 +171,7 @@ DEFAULTS = {
         'message_header_value_fg': 'light gray',
         'messagesummary_even_bg': '#068',
         'messagesummary_even_fg': 'white',
-        'messagesummary_focus_bg': 'g58',
+        'messagesummary_focus_bg': 'g10',
         'messagesummary_focus_fg': '#ff8',
         'messagesummary_odd_bg': '#006',
         'messagesummary_odd_fg': 'white',
@@ -181,19 +181,19 @@ DEFAULTS = {
         'notify_normal_fg': 'default',
         'prompt_bg': 'default',
         'prompt_fg': 'light gray',
-        'tag_focus_bg': 'g58',
-        'tag_focus_fg': '#ffa',
+        'tag_focus_bg': 'g10',
+        'tag_focus_fg': 'default',
         'tag_bg': 'default',
         'tag_fg': 'brown',
 
-        'tag_replied_fg': 'yellow', 
-        'tag_attach_fg': 'light blue', 
-        'tag_unread_fg': 'light green', 
+        'tag_inbox_fg': 'yellow', 
+        'tag_attachment_fg': 'light blue', 
+        'tag_unread_fg': '#a86', 
         'tag_starred_fg': 'light red', 
 
         'threadline_authors_bg': 'default',
         'threadline_authors_fg': '#6d6',
-        'threadline_authors_focus_bg': 'g58',
+        'threadline_authors_focus_bg': 'g10',
         'threadline_authors_focus_fg': '#8f6',
         'threadline_bg': 'default',
         'threadline_content_bg': 'default',
@@ -202,32 +202,34 @@ DEFAULTS = {
         'threadline_content_focus_fg': '#866',
         'threadline_date_bg': 'default',
         'threadline_date_fg': 'g58',
-        'threadline_date_focus_bg': 'g58',
+        'threadline_date_focus_bg': 'g10',
         'threadline_date_focus_fg': 'g89',
         'threadline_fg': 'default',
-        'threadline_focus_bg': 'g58',
+        'threadline_focus_bg': 'g10',
         'threadline_focus_fg': 'white',
         'threadline_mailcount_bg': 'default',
         'threadline_mailcount_fg': 'light gray',
-        'threadline_mailcount_focus_bg': 'g58',
+        'threadline_mailcount_focus_bg': 'g10',
         'threadline_mailcount_focus_fg': 'g89',
         'threadline_subject_bg': 'default',
         'threadline_subject_fg': 'g89',
-        'threadline_subject_focus_bg': 'g58',
+        'threadline_subject_focus_bg': 'g10',
         'threadline_subject_focus_fg': 'g89',
         'threadline_tags_bg': 'default',
         'threadline_tags_fg': '#a86',
-        'threadline_tags_focus_bg': 'g58',
+        'threadline_tags_focus_bg': 'g10',
         'threadline_tags_focus_fg': '#ff8',
     },
 
     # Customize colors and symbols of particular tags
-    'tag-colors':  {
+    'tag-translate':  {
         #arrow:21A6 #tick:2714 #thin-tick:2713 #croco:27EB
-            'inbox': ['tag_replied', u"\u2713"], 
-            'unread': ['tag_starred', u"\u27EB"],
-            'starred': ['tag_starred', u"\u2691"],
-            'attachment': ['tag_attach', u"\u27F1"]
+        # forward arrow: 2924
+            'forwarded': u"\u2924", 
+            'inbox':  u"\u21B3", 
+            'unread':  u"\u2709", #2709
+            'starred':  u"\u2691",#2739 , 2691, 2605
+            'attachment':  u"\u27F1",
             },
 
     'global-maps': {
