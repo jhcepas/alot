@@ -20,11 +20,95 @@ import email
 import urwid
 from urwid.command_map import command_map
 import logging
+from collections import deque
+from string import strip 
 
 from settings import config
 from helper import shorten
 from helper import pretty_datetime
 import message
+
+def parse_authors(authors_string, maxlength, last_author=None):
+    """ parse all authors in a string (comma separated) and adjust the
+    best way to display them in a fixed length. 
+
+    If the list of complete sender names does not fit in the
+    max_length, it tries to shorten names by using only the first part
+    of the name.
+
+    If the list is still too long, hide authors according to the
+    following priority:
+
+      - First author is always shown (if too long is shorten with ellipsis)
+
+      - If the is remaining space, last author is shown (if too long,
+        uses ellipsis)
+
+      - If there are more authors in the thread, show the maximum of
+        them. more recent senders have more priority.
+      
+      - hidden authors are indicated with an ellipsis between the
+        first and the other authors
+
+    Example (authors string with different length constrains):
+         'King Kong, Mucho Muchacho, Jaime Huerta, Flash Gordon'
+         'King, Mucho, Jaime, Flash'
+         'King, ., Jaime, Flash'
+         'King, ., J., Flash'
+         'King, ., Flash'
+         'King, ., Fl.'
+         'King, .'
+         'K., .' 
+         'K.'
+"""
+
+    # If author list is too long, it uses only the first part of each
+    # name (gmail style)
+    short_names = len(authors_string) > maxlength
+    authors = deque()
+    for au in authors_string.split(","):
+        if short_names:
+            authors.append(strip(au.split()[0]))
+        else:
+            authors.append(au)
+    total_authors = len(authors)
+    print authors
+    first_au = shorten(authors.popleft(), maxlength)
+    remaining_length = maxlength - len(first_au)
+    authors_chain = deque()
+
+    if authors and maxlength>3 and remaining_length < 3: 
+        first_au = shorten(first_au, maxlength - 3)
+        print remaining_length, first_au
+        remaining_length += 3
+
+    while authors and remaining_length >= 3: 
+        au = authors.pop()
+        print au, authors_chain, remaining_length
+        if len(au)>1 and (remaining_length == 3 or (authors and remaining_length <7)): 
+            authors_chain.appendleft(u'\u2026')
+            break 
+        else:
+            if authors:
+                print "added author reserving 3 chars", au
+                au_string = shorten(au, remaining_length - 5)
+            else:
+                print "added author", au
+                au_string = shorten(au, remaining_length - 2)
+            remaining_length -= len(au_string) + 2
+            authors_chain.appendleft(au_string)
+
+    authors_chain.appendleft(first_au)
+    print authors_chain
+    #authors_chain.appendleft(shorten(orig_author, remaining_length))
+    authorsstring = ', '.join(authors_chain)
+    print authorsstring
+    print authorsstring[:maxlength]
+    print
+    #if total_authors>2:
+    #    raw_input()
+    return authorsstring[:maxlength]
+        
 
 
 class ThreadlineWidget(urwid.AttrMap):
@@ -40,6 +124,7 @@ class ThreadlineWidget(urwid.AttrMap):
 
     def rebuild(self):
         cols = []
+        # DATE
         formatstring = config.get('general', 'timestamp_format')
         newest = self.thread.get_newest_date()
         if formatstring:
@@ -47,33 +132,50 @@ class ThreadlineWidget(urwid.AttrMap):
         else:
             datestring = pretty_datetime(newest).rjust(10)
         self.date_w = urwid.AttrMap(urwid.Text(datestring), 'threadline_date')
-        cols.append(('fixed', len(datestring), self.date_w))
 
-        mailcountstring = "(%d)" % self.thread.get_total_messages()
-        self.mailcount_w = urwid.AttrMap(urwid.Text(mailcountstring),
-                                   'threadline_mailcount')
-        cols.append(('fixed', len(mailcountstring), self.mailcount_w))
+        # SIZE
+        thread_size = self.thread.get_total_messages()
+        # Show number of messages only if there are at least 2 mails
+        # (save space in the line)
+        if thread_size>1 and thread_size<=20:
+            charcode = 0x2474 + thread_size
+            mailcountstring = unichr(charcode)
+        elif thread_size>1 and thread_size>20: 
+            mailcountstring = "(%d)" % thread_size
+        else:
+            mailcountstring = " "
 
+        # TAGS
         tags = self.thread.get_tags()
         tags.sort()
+        tagstrings = []
         for tag in tags:
             tw = TagWidget(tag)
             self.tag_widgets.append(tw)
-            cols.append(('fixed', tw.width(), tw))
-
-        authors = self.thread.get_authors() or '(None)'
+            tagstrings.append(('fixed', tw.width(), tw))
+            
+        # AUTHORS
+        # for j in xrange(1, 30):
+        #     print "DEBUG", j
+        #     authorsstring = parse_authors(authors_string, j)
+        authors_string = self.thread.get_authors() or '(None)'
         maxlength = config.getint('general', 'authors_maxlength')
-        authorsstring = shorten(authors, maxlength).strip()
+
+        authorsstring = parse_authors(authors_string, maxlength - len(mailcountstring))
+        offset = maxlength - len(authorsstring)
+        mailcountstring = mailcountstring.rjust(offset)
+        self.mailcount_w = urwid.AttrMap(urwid.Text(mailcountstring),
+                                   'threadline_mailcount')
+
         self.authors_w = urwid.AttrMap(urwid.Text(authorsstring),
                                        'threadline_authors')
-        cols.append(('fixed', len(authorsstring), self.authors_w))
 
+        # SUBJECT
         subjectstring = self.thread.get_subject().strip()
         self.subject_w = urwid.AttrMap(urwid.Text(subjectstring, wrap='clip'),
                                  'threadline_subject')
-        if subjectstring:
-            cols.append(('fixed', len(subjectstring), self.subject_w))
 
+        # BODY
         if self.display_content:
             msgs = self.thread.get_messages().keys()
             msgs.sort()
@@ -82,7 +184,22 @@ class ThreadlineWidget(urwid.AttrMap):
             self.content_w = urwid.AttrMap(urwid.Text(contentstring,
                                                       wrap='clip'),
                                            'threadline_content')
+
+        # Set column order
+        self.select = urwid.AttrMap(urwid.Text("[ ] ", wrap='clip'),
+                                    'threadline_subject')
+        cols.append(('fixed', 4, self.select))
+        cols.append(('fixed', len(authorsstring), self.authors_w))
+        cols.append(('fixed', len(mailcountstring), self.mailcount_w))
+        cols.extend(tagstrings)
+
+        if subjectstring:
+            cols.append(('fixed', len(subjectstring), self.subject_w))
+        if self.display_content:
             cols.append(self.content_w)
+
+        cols.append(('fixed', len(datestring), self.date_w))
+        
 
         self.columns = urwid.Columns(cols, dividechars=1)
         self.original_widget = self.columns
@@ -137,12 +254,18 @@ class BufferlineWidget(urwid.Text):
 
 class TagWidget(urwid.AttrMap):
     def __init__(self, tag):
+
         self.tag = tag
-        self.translated = config.get('tag-translate', tag, fallback=tag)
-        self.translated = self.translated.encode('utf-8')
-        self.txt = urwid.Text(self.translated, wrap='clip')
-        normal = config.get_tagattr(tag)
+        #self.translated = config.get('tag-translate', tag, fallback=tag)
+        #self.translated = self.translated.encode('utf-8')
+        #self.txt = urwid.Text(self.translated, wrap='clip')
+        #normal = config.get_tagattr(tag)
+        print config.get_tagattr(tag)
+
+        normal, text = config.get('tag-colors', tag) or [config.get_tagattr(tag), tag]
         focus = config.get_tagattr(tag, focus=True)
+        print tag, normal, text
+        self.txt = urwid.Text(text.encode('utf-8'), wrap='clip')
         urwid.AttrMap.__init__(self, self.txt, normal, focus)
 
     def width(self):

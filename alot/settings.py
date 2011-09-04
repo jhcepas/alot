@@ -33,7 +33,7 @@ DEFAULTS = {
         'spawn_editor': 'False',
         'displayed_headers': 'From,To,Cc,Bcc,Subject',
         'display_content_in_threadline': 'False',
-        'authors_maxlength': '30',
+        'authors_maxlength': '15',
         'ask_subject': 'True',
         'notify_timeout': '2',
         'show_statusbar': 'True',
@@ -185,6 +185,7 @@ DEFAULTS = {
         'tag_focus_fg': '#ffa',
         'tag_bg': 'default',
         'tag_fg': 'brown',
+        'tag_inbox_fg': 'yellow', 
         'threadline_authors_bg': 'default',
         'threadline_authors_fg': '#6d6',
         'threadline_authors_focus_bg': 'g58',
@@ -206,7 +207,7 @@ DEFAULTS = {
         'threadline_mailcount_focus_bg': 'g58',
         'threadline_mailcount_focus_fg': 'g89',
         'threadline_subject_bg': 'default',
-        'threadline_subject_fg': 'g58',
+        'threadline_subject_fg': 'g89',
         'threadline_subject_focus_bg': 'g58',
         'threadline_subject_focus_fg': 'g89',
         'threadline_tags_bg': 'default',
@@ -214,6 +215,14 @@ DEFAULTS = {
         'threadline_tags_focus_bg': 'g58',
         'threadline_tags_focus_fg': '#ff8',
     },
+
+    # Customize colors and symbols of particular tags
+    'tag-colors':  {
+            'inbox': ['tag_inbox_fg', u"\u21A6"],
+            'unread': ['tag_inbox_fg', u"\u2691"],
+            'attachment': ['tag_inbox_fg', u"\u27F1"]
+            },
+
     'global-maps': {
         '$': 'flush',
         ':': 'prompt',

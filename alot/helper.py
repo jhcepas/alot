@@ -32,9 +32,9 @@ from email.mime.multipart import MIMEMultipart
 
 
 def shorten(string, maxlen):
-    if len(string) > maxlen - 3:
-        string = string[:maxlen - 3] + u'\u2026'
-    return string
+    if maxlen>1 and len(string) > maxlen:
+        string = string[:maxlen-1] + u'\u2026'
+    return string[:maxlen]
 
 
 def pretty_datetime(d):
