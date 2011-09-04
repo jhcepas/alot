@@ -33,7 +33,7 @@ DEFAULTS = {
         'spawn_editor': 'False',
         'displayed_headers': 'From,To,Cc,Bcc,Subject',
         'display_content_in_threadline': 'False',
-        'authors_maxlength': '15',
+        'authors_maxlength': '30',
         'ask_subject': 'True',
         'notify_timeout': '2',
         'show_statusbar': 'True',
@@ -185,7 +185,12 @@ DEFAULTS = {
         'tag_focus_fg': '#ffa',
         'tag_bg': 'default',
         'tag_fg': 'brown',
-        'tag_inbox_fg': 'yellow', 
+
+        'tag_replied_fg': 'yellow', 
+        'tag_attach_fg': 'light blue', 
+        'tag_unread_fg': 'light green', 
+        'tag_starred_fg': 'light red', 
+
         'threadline_authors_bg': 'default',
         'threadline_authors_fg': '#6d6',
         'threadline_authors_focus_bg': 'g58',
@@ -218,9 +223,9 @@ DEFAULTS = {
 
     # Customize colors and symbols of particular tags
     'tag-colors':  {
-            'inbox': ['tag_inbox_fg', u"\u21A6"],
-            'unread': ['tag_inbox_fg', u"\u2691"],
-            'attachment': ['tag_inbox_fg', u"\u27F1"]
+            'inbox': ['tag_replied', u"\u21A6"],
+            'unread': ['tag_starred', u"\u2691"],
+            'attachment': ['tag_attach', u"\u27F1"]
             },
 
     'global-maps': {
@@ -357,6 +362,8 @@ class AlotConfigParser(DefaultsConfigParser):
                 hb = self.get('256c-theme', 'threadline_focus_bg',
                               fallback='default')
                 p.append((attr + '_focus', nf, nb, m, hf, hb))
+        print '\n'.join([ str(v) for v in  p])
+        raw_input()
         return p
 
     def get_tagattr(self, tag, focus=False):

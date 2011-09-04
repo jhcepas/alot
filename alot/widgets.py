@@ -28,7 +28,7 @@ from helper import shorten
 from helper import pretty_datetime
 import message
 
-def parse_authors(authors_string, maxlength, last_author=None):
+def parse_authors(authors_string, maxlength):
     """ parse all authors in a string (comma separated) and adjust the
     best way to display them in a fixed length. 
 
@@ -63,24 +63,34 @@ def parse_authors(authors_string, maxlength, last_author=None):
          'K.'
 """
 
+    # I will create a list of authors by parsing author_string. I use
+    # deque to do popleft without performance penalties
+    authors = deque()
+
     # If author list is too long, it uses only the first part of each
     # name (gmail style)
     short_names = len(authors_string) > maxlength
-    authors = deque()
     for au in authors_string.split(","):
         if short_names:
             authors.append(strip(au.split()[0]))
         else:
             authors.append(au)
 
-    first_au = shorten(authors.popleft(), maxlength)
-    remaining_length = maxlength - len(first_au)
+    # Author chain will contain the list of author strings to be
+    # concatenated using commas for the final formatted author_string.
     authors_chain = deque()
 
+    # reserve space for first author
+    first_au = shorten(authors.popleft(), maxlength)
+    remaining_length = maxlength - len(first_au)
+
+    # Tries to add an ellipsis if no space to show more than 1 author
     if authors and maxlength>3 and remaining_length < 3: 
         first_au = shorten(first_au, maxlength - 3)
         remaining_length += 3
 
+    # Tries to add as more authors as possible. It takes into account
+    # that if any author will be hidden, and ellipsis should be added
     while authors and remaining_length >= 3: 
         au = authors.pop()
         if len(au)>1 and (remaining_length == 3 or (authors and remaining_length <7)): 
@@ -88,17 +98,18 @@ def parse_authors(authors_string, maxlength, last_author=None):
             break 
         else:
             if authors:
+                # 5= ellipsis + 2 x comma and space used as separators
                 au_string = shorten(au, remaining_length - 5)
             else:
+                # 2 = comma and space used as separator
                 au_string = shorten(au, remaining_length - 2)
             remaining_length -= len(au_string) + 2
             authors_chain.appendleft(au_string)
 
+    # Add the first author to the list and concatenate list 
     authors_chain.appendleft(first_au)
     authorsstring = ', '.join(authors_chain)
-    return authorsstring[:maxlength]
-        
-
+    return authorsstring
 
 class ThreadlineWidget(urwid.AttrMap):
     def __init__(self, tid, dbman):
@@ -249,13 +260,17 @@ class TagWidget(urwid.AttrMap):
         #self.translated = self.translated.encode('utf-8')
         #self.txt = urwid.Text(self.translated, wrap='clip')
         #normal = config.get_tagattr(tag)
-        
+
         # I understand yet the use of self.translated
         # Check if a symbol conversion and custom color exists for this tag
-        normal, text = config.get('tag-colors', tag, []) or [config.get_tagattr(tag), tag]
+        normal, text = config.get('tag-colors', tag, []) or \
+            [config.get_tagattr(tag), tag]
         focus = config.get_tagattr(tag, focus=True)
         self.txt = urwid.Text(text.encode('utf-8'), wrap='clip')
-        urwid.AttrMap.__init__(self, self.txt, normal, focus)
+        self.focus_palette = focus
+        self.unfocus_palette = normal
+        urwid.AttrMap.__init__(self, self.txt, "message_attachment", focus)
+
 
     def width(self):
         # evil voodoo hotfix for double width chars that may
@@ -272,11 +287,11 @@ class TagWidget(urwid.AttrMap):
         return self.tag
 
     def set_focussed(self):
-        self.set_attr_map({None: config.get_tagattr(self.tag, focus=True)})
-
+        #self.set_attr_map({None: config.get_tagattr(self.tag, focus=True)})
+        self.set_attr_map({None: self.focus_palette})
     def set_unfocussed(self):
-        self.set_attr_map({None: config.get_tagattr(self.tag)})
-
+        #self.set_attr_map({None: config.get_tagattr(self.tag)})
+        self.set_attr_map({None: self.unfocus_palette})
 
 class CompleteEdit(urwid.Edit):
     def __init__(self, completer, edit_text=u'', **kwargs):
