@@ -223,8 +223,10 @@ DEFAULTS = {
 
     # Customize colors and symbols of particular tags
     'tag-colors':  {
-            'inbox': ['tag_replied', u"\u21A6"],
-            'unread': ['tag_starred', u"\u2691"],
+        #arrow:21A6 #tick:2714 #thin-tick:2713 #croco:27EB
+            'inbox': ['tag_replied', u"\u2713"], 
+            'unread': ['tag_starred', u"\u27EB"],
+            'starred': ['tag_starred', u"\u2691"],
             'attachment': ['tag_attach', u"\u27F1"]
             },
 

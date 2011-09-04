@@ -186,9 +186,10 @@ class ThreadlineWidget(urwid.AttrMap):
                                            'threadline_content')
 
         # Set column order
-        self.select = urwid.AttrMap(urwid.Text("[ ] ", wrap='clip'),
-                                    'threadline_subject')
-        cols.append(('fixed', 4, self.select))
+        #self.select = urwid.AttrMap(urwid.Text("[ ] ", wrap='clip'),
+        #                            'threadline_subject')
+        #cols.append(('fixed', 4, self.select))
+        cols.append(('fixed', len(datestring), self.date_w))
         cols.append(('fixed', len(authorsstring), self.authors_w))
         cols.append(('fixed', len(mailcountstring), self.mailcount_w))
         cols.extend(tagstrings)
@@ -198,7 +199,7 @@ class ThreadlineWidget(urwid.AttrMap):
         if self.display_content:
             cols.append(self.content_w)
 
-        cols.append(('fixed', len(datestring), self.date_w))
+
         
 
         self.columns = urwid.Columns(cols, dividechars=1)
