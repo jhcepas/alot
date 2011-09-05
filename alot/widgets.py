@@ -20,96 +20,11 @@ import email
 import urwid
 from urwid.command_map import command_map
 import logging
-from collections import deque
-from string import strip 
 
 from settings import config
-from helper import shorten
+from helper import shorten_author_string 
 from helper import pretty_datetime
 import message
-
-def parse_authors(authors_string, maxlength):
-    """ parse all authors in a string (comma separated) and adjust the
-    best way to display them in a fixed length. 
-
-    If the list of complete sender names does not fit in the
-    max_length, it tries to shorten names by using only the first part
-    of the name.
-
-    If the list is still too long, hide authors according to the
-    following priority:
-
-      - First author is always shown (if too long is shorten with ellipsis)
-
-      - If remaining space, last author is also shown (if too long,
-        uses ellipsis)
-
-      - If there are more than 2 authors in the thread, show the
-        maximum of them. More recent senders have more priority (is
-        the list of authors already sorted by the date of msgs????)
-      
-      - If it is necessary to hide authors, this is indicated with an
-        ellipsis between the first and the other authors shown.
-
-    Example (authors string with different length constrains):
-         'King Kong, Mucho Muchacho, Jaime Huerta, Flash Gordon'
-         'King, Mucho, Jaime, Flash'
-         'King, ., Jaime, Flash'
-         'King, ., J., Flash'
-         'King, ., Flash'
-         'King, ., Fl.'
-         'King, .'
-         'K., .' 
-         'K.'
-"""
-
-    # I will create a list of authors by parsing author_string. I use
-    # deque to do popleft without performance penalties
-    authors = deque()
-
-    # If author list is too long, it uses only the first part of each
-    # name (gmail style)
-    short_names = len(authors_string) > maxlength
-    for au in authors_string.split(","):
-        if short_names:
-            authors.append(strip(au.split()[0]))
-        else:
-            authors.append(au)
-
-    # Author chain will contain the list of author strings to be
-    # concatenated using commas for the final formatted author_string.
-    authors_chain = deque()
-
-    # reserve space for first author
-    first_au = shorten(authors.popleft(), maxlength)
-    remaining_length = maxlength - len(first_au)
-
-    # Tries to add an ellipsis if no space to show more than 1 author
-    if authors and maxlength>3 and remaining_length < 3: 
-        first_au = shorten(first_au, maxlength - 3)
-        remaining_length += 3
-
-    # Tries to add as more authors as possible. It takes into account
-    # that if any author will be hidden, and ellipsis should be added
-    while authors and remaining_length >= 3: 
-        au = authors.pop()
-        if len(au)>1 and (remaining_length == 3 or (authors and remaining_length <7)): 
-            authors_chain.appendleft(u'\u2026')
-            break 
-        else:
-            if authors:
-                # 5= ellipsis + 2 x comma and space used as separators
-                au_string = shorten(au, remaining_length - 5)
-            else:
-                # 2 = comma and space used as separator
-                au_string = shorten(au, remaining_length - 2)
-            remaining_length -= len(au_string) + 2
-            authors_chain.appendleft(au_string)
-
-    # Add the first author to the list and concatenate list 
-    authors_chain.appendleft(first_au)
-    authorsstring = ', '.join(authors_chain)
-    return authorsstring
 
 class ThreadlineWidget(urwid.AttrMap):
     def __init__(self, tid, dbman):
@@ -155,13 +70,9 @@ class ThreadlineWidget(urwid.AttrMap):
             tagstrings.append(('fixed', tw.width(), tw))
             
         # AUTHORS
-        # for j in xrange(1, 30):
-        #     print "DEBUG", j
-        #     authorsstring = parse_authors(authors_string, j)
         authors_string = self.thread.get_authors() or '(None)'
         maxlength = config.getint('general', 'authors_maxlength')
-
-        authorsstring = parse_authors(authors_string, maxlength - len(mailcountstring))
+        authorsstring = shorten_author_string(authors_string, maxlength - len(mailcountstring))
         offset = maxlength - len(authorsstring)
         mailcountstring = mailcountstring.rjust(offset)
         self.mailcount_w = urwid.AttrMap(urwid.Text(mailcountstring),
